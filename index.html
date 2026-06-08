@@ -641,20 +641,216 @@ function updateMacroLabels(id,t){var m=MEMBERS.find(function(x){return x.id===id
 function getEffectiveTargets(id){var t=getTargets(id);var m=MEMBERS.find(function(x){return x.id===id;});return{cal:t&&t.cal?t.cal:m.calTarget,p:t&&t.p?t.p:m.pTarget,c:t&&t.c?t.c:m.cTarget,f:t&&t.f?t.f:m.fTarget};}
 
 // ── AI MEAL ──
-async function logMealAI(id){
-  var input=document.getElementById(id+'-ai-in');var text=input.value.trim();
-  if(!text){showToast('Type what you ate first!',true);return;}
-  var btn=document.getElementById(id+'-ai-btn');var thinking=document.getElementById(id+'-ai-thinking');
-  btn.disabled=true;thinking.classList.add('show');
-  try{
-    var res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:400,system:'Nutrition expert. Respond ONLY with JSON, no markdown: {"description":"short name max 60 chars","calories":number,"protein":number,"carbs":number,"fat":number}',messages:[{role:'user',content:text}]})});
-    var data=await res.json();
-    var meal=JSON.parse(data.content[0].text.trim());
-    meal.time=new Date().toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});
-    var meals=getMeals(id);meals.push(meal);saveMeals(id,meals);input.value='';loadMeals(id);
-    showToast('Logged! '+meal.calories+' cal · '+meal.protein+'g protein 🔥');
-  }catch(e){showToast('Could not analyze — try again',true);}
-  finally{btn.disabled=false;thinking.classList.remove('show');}
+// ── NUTRITION DATABASE (per oz or per unit as noted) ──
+var NUTRITION_DB = [
+  // PROTEINS (per oz)
+  {keys:['chicken breast','chicken','grilled chicken','baked chicken'],cal_oz:31,pro_oz:6.5,carb_oz:0,fat_oz:0.4},
+  {keys:['chicken thigh','chicken thighs'],cal_oz:40,pro_oz:5.5,carb_oz:0,fat_oz:2},
+  {keys:['ground beef','beef','93/7','lean beef'],cal_oz:50,pro_oz:7,carb_oz:0,fat_oz:2.5},
+  {keys:['sirloin','steak','flank steak','flank','sirloin steak'],cal_oz:45,pro_oz:7,carb_oz:0,fat_oz:2},
+  {keys:['salmon','grilled salmon'],cal_oz:42,pro_oz:5.8,carb_oz:0,fat_oz:2},
+  {keys:['tilapia','white fish'],cal_oz:30,pro_oz:6,carb_oz:0,fat_oz:0.5},
+  {keys:['shrimp'],cal_oz:28,pro_oz:5.5,carb_oz:0.3,fat_oz:0.3},
+  {keys:['turkey','ground turkey'],cal_oz:45,pro_oz:7,carb_oz:0,fat_oz:1.5},
+  {keys:['tuna','canned tuna'],cal_oz:35,pro_oz:7,carb_oz:0,fat_oz:0.5},
+  // EGGS (per egg)
+  {keys:['whole egg','egg','eggs'],cal_each:70,pro_each:6,carb_each:0.5,fat_each:5,unit:'egg'},
+  {keys:['egg white','egg whites','white'],cal_each:17,pro_each:3.5,carb_each:0.2,fat_each:0,unit:'egg white'},
+  {keys:['hard boiled egg','boiled egg','hard boiled'],cal_each:70,pro_each:6,carb_each:0.5,fat_each:5,unit:'egg'},
+  // CARBS
+  {keys:['white rice','fried rice','rice'],cal_cup:200,pro_cup:4,carb_cup:44,fat_cup:0.5,unit:'cup'},
+  {keys:['brown rice'],cal_cup:215,pro_cup:5,carb_cup:45,fat_cup:1.5,unit:'cup'},
+  {keys:['potato','baked potato','white potato'],cal_oz:26,pro_oz:0.7,carb_oz:6,fat_oz:0},
+  {keys:['sweet potato'],cal_oz:26,pro_oz:0.5,carb_oz:6,fat_oz:0},
+  {keys:['oats','oatmeal'],cal_cup:300,pro_cup:10,carb_cup:54,fat_cup:5,unit:'cup'},
+  {keys:['bread','white bread','slice'],cal_each:80,pro_each:3,carb_each:15,fat_each:1,unit:'slice'},
+  {keys:['pasta','spaghetti'],cal_cup:220,pro_cup:8,carb_cup:43,fat_cup:1.5,unit:'cup'},
+  {keys:['quinoa'],cal_cup:222,pro_cup:8,carb_cup:39,fat_cup:4,unit:'cup'},
+  // DAIRY
+  {keys:['greek yogurt','nonfat greek yogurt','yogurt'],cal_cup:130,pro_cup:22,carb_cup:9,fat_cup:0.5,unit:'cup'},
+  {keys:['cottage cheese','low fat cottage cheese'],cal_cup:200,pro_cup:28,carb_cup:8,fat_cup:4,unit:'cup'},
+  {keys:['milk','whole milk'],cal_cup:150,pro_cup:8,carb_cup:12,fat_cup:8,unit:'cup'},
+  {keys:['cheddar cheese','cheese','shredded cheese'],cal_oz:114,pro_oz:7,carb_oz:0.5,fat_oz:9},
+  {keys:['butter'],cal_tbsp:100,pro_tbsp:0,carb_tbsp:0,fat_tbsp:11,unit:'tbsp'},
+  // PROTEIN SUPPLEMENTS
+  {keys:['whey protein','protein shake','protein powder','scoop whey','whey'],cal_each:120,pro_each:25,carb_each:3,fat_each:1,unit:'scoop'},
+  // FRUITS & JUICES
+  {keys:['watermelon juice','watermelon'],cal_cup:80,pro_cup:1,carb_cup:20,fat_cup:0,unit:'cup'},
+  {keys:['orange juice','oj'],cal_cup:110,pro_cup:2,carb_cup:26,fat_cup:0,unit:'cup'},
+  {keys:['banana'],cal_each:105,pro_each:1.3,carb_each:27,fat_each:0.3,unit:'banana'},
+  {keys:['apple'],cal_each:95,pro_each:0.5,carb_each:25,fat_each:0.3,unit:'apple'},
+  {keys:['blueberries','strawberries','berries'],cal_cup:84,pro_cup:1,carb_cup:21,fat_cup:0.5,unit:'cup'},
+  // VEGETABLES
+  {keys:['broccoli','steamed broccoli'],cal_cup:55,pro_cup:3.7,carb_cup:11,fat_cup:0.6,unit:'cup'},
+  {keys:['spinach','sauteed spinach'],cal_cup:40,pro_cup:5,carb_cup:6,fat_cup:0.5,unit:'cup'},
+  {keys:['green beans'],cal_cup:44,pro_cup:2,carb_cup:10,fat_cup:0.3,unit:'cup'},
+  {keys:['asparagus'],cal_cup:40,pro_cup:4,carb_cup:7,fat_cup:0.2,unit:'cup'},
+  {keys:['peppers','bell peppers'],cal_cup:46,pro_cup:1.5,carb_cup:9,fat_cup:0.4,unit:'cup'},
+  {keys:['onion','onions'],cal_cup:64,pro_cup:1.5,carb_cup:15,fat_cup:0.2,unit:'cup'},
+  {keys:['cucumber'],cal_cup:16,pro_cup:0.7,carb_cup:3.5,fat_cup:0.1,unit:'cup'},
+  // FATS & OILS
+  {keys:['olive oil','avocado oil','sesame oil','coconut oil','oil'],cal_tbsp:120,pro_tbsp:0,carb_tbsp:0,fat_tbsp:14,unit:'tbsp'},
+  {keys:['almonds','almond'],cal_oz:164,pro_oz:6,carb_oz:6,fat_oz:14},
+  {keys:['walnuts','walnut'],cal_oz:185,pro_oz:4,carb_oz:4,fat_oz:18},
+  {keys:['cashews','cashew'],cal_oz:157,pro_oz:5,carb_oz:9,fat_oz:12},
+  {keys:['peanut butter','peanut'],cal_tbsp:95,pro_tbsp:4,carb_tbsp:3,fat_tbsp:8,unit:'tbsp'},
+  {keys:['avocado'],cal_each:240,pro_each:3,carb_each:13,fat_each:22,unit:'avocado'},
+  // SAUCES & EXTRAS
+  {keys:['soy sauce'],cal_tbsp:10,pro_tbsp:1,carb_tbsp:1,fat_tbsp:0,unit:'tbsp'},
+  {keys:['salsa'],cal_tbsp:5,pro_tbsp:0.2,carb_tbsp:1,fat_tbsp:0,unit:'tbsp'},
+  {keys:['hot sauce'],cal_tbsp:5,pro_tbsp:0,carb_tbsp:0.5,fat_tbsp:0,unit:'tbsp'},
+  {keys:['black beans','beans'],cal_cup:227,pro_cup:15,carb_cup:41,fat_cup:0.9,unit:'cup'},
+  {keys:['rice cake'],cal_each:35,pro_each:0.7,carb_each:7,fat_each:0.3,unit:'rice cake'},
+];
+
+// Unit parsers
+var FRACTIONS = {'1/8':0.125,'1/4':0.25,'1/3':0.333,'1/2':0.5,'2/3':0.667,'3/4':0.75};
+var UNIT_MAP = {
+  'oz':1,'ounce':1,'ounces':1,
+  'cup':1,'cups':1,
+  'tbsp':1,'tablespoon':1,'tablespoons':1,
+  'tsp':0.333,'teaspoon':0.333,
+  'scoop':1,'scoops':1,
+  'slice':1,'slices':1,
+  'egg':1,'eggs':1,
+  'banana':1,'apple':1,'avocado':1,'piece':1,
+  'quart':4,'qt':4,'pint':2,'pt':2,'liter':4.2,'litre':4.2,
+  'lb':16,'lbs':16,'pound':16,'pounds':16,
+  'g':0.0353,'gram':0.0353,'grams':0.0353,
+  'ml':0.00423,'cc':0.00423,
+};
+
+function parseAmount(str) {
+  str = str.trim();
+  // Check fractions first
+  for (var f in FRACTIONS) {
+    if (str.indexOf(f) === 0) {
+      var rest = str.replace(f,'').trim();
+      var num = parseFloat(rest);
+      return FRACTIONS[f] + (isNaN(num)?0:num);
+    }
+  }
+  var n = parseFloat(str);
+  return isNaN(n) ? 1 : n;
+}
+
+function findFood(text) {
+  var lower = text.toLowerCase();
+  var best = null; var bestScore = 0;
+  for (var i=0; i<NUTRITION_DB.length; i++) {
+    var item = NUTRITION_DB[i];
+    for (var j=0; j<item.keys.length; j++) {
+      if (lower.indexOf(item.keys[j]) >= 0) {
+        var score = item.keys[j].length;
+        if (score > bestScore) { bestScore = score; best = item; }
+      }
+    }
+  }
+  return best;
+}
+
+function parseQuantityAndUnit(text) {
+  // Match patterns like "8oz", "8 oz", "1/2 cup", "2 cups", "1 scoop", "3 eggs"
+  var patterns = [
+    /(\d+\.?\d*|\d*\/\d+)\s*(quart|qt|pint|pt|liter|litre|pound|pounds|lb|lbs|gram|grams|g\b|ml|cc|ounce|ounces|oz|cups?|tbsp|tablespoons?|tsps?|teaspoons?|scoops?|slices?|eggs?|bananas?|apples?|avocados?|pieces?)/i,
+  ];
+  for (var i=0; i<patterns.length; i++) {
+    var m = text.match(patterns[i]);
+    if (m) {
+      var amt = parseAmount(m[1]);
+      var unit = m[2].toLowerCase().replace(/s$/,'');
+      var multiplier = UNIT_MAP[unit] || UNIT_MAP[unit+'s'] || 1;
+      return { amount: amt, unit: unit, multiplier: multiplier };
+    }
+  }
+  // Default: assume 1 serving
+  return { amount: 1, unit: 'serving', multiplier: 1 };
+}
+
+function calcNutrition(food, qty) {
+  var amt = qty.amount * qty.multiplier;
+  // Per oz food
+  if (food.cal_oz !== undefined) {
+    return { cal: Math.round(food.cal_oz * amt), pro: Math.round(food.pro_oz * amt), carb: Math.round(food.carb_oz * amt), fat: Math.round(food.fat_oz * amt) };
+  }
+  // Per cup
+  if (food.cal_cup !== undefined) {
+    // If unit was oz convert: 1 cup = 8 oz
+    var cups = (qty.unit==='oz'||qty.unit==='ounce') ? amt/8 : amt;
+    return { cal: Math.round(food.cal_cup * cups), pro: Math.round(food.pro_cup * cups), carb: Math.round(food.carb_cup * cups), fat: Math.round(food.fat_cup * cups) };
+  }
+  // Per tbsp
+  if (food.cal_tbsp !== undefined) {
+    var tbsps = (qty.unit==='oz'||qty.unit==='ounce') ? amt*2 : amt;
+    return { cal: Math.round(food.cal_tbsp * tbsps), pro: Math.round(food.pro_tbsp * tbsps), carb: Math.round(food.carb_tbsp * tbsps), fat: Math.round(food.fat_tbsp * tbsps) };
+  }
+  // Per each (egg, scoop, banana etc)
+  if (food.cal_each !== undefined) {
+    return { cal: Math.round(food.cal_each * amt), pro: Math.round(food.pro_each * amt), carb: Math.round(food.carb_each * amt), fat: Math.round(food.fat_each * amt) };
+  }
+  return { cal: 0, pro: 0, carb: 0, fat: 0 };
+}
+
+function analyzeMealText(text) {
+  // Split by commas, "and", newlines
+  var parts = text.split(/,|\band\b|\n/);
+  var totalCal=0, totalPro=0, totalCarb=0, totalFat=0;
+  var matched = [];
+  var unmatched = [];
+
+  parts.forEach(function(part) {
+    part = part.trim();
+    if (!part) return;
+    var food = findFood(part);
+    if (food) {
+      var qty = parseQuantityAndUnit(part);
+      var n = calcNutrition(food, qty);
+      totalCal += n.cal; totalPro += n.pro; totalCarb += n.carb; totalFat += n.fat;
+      matched.push(part);
+    } else {
+      unmatched.push(part);
+    }
+  });
+
+  // Build description from matched items
+  var desc = matched.slice(0,3).map(function(p){
+    return p.replace(/^\d+\.?\d*\s*(\/\d+)?\s*/,'').replace(/^(oz|cup|tbsp|scoop|egg|slice)\s*/i,'').trim();
+  }).join(', ');
+  if (desc.length > 60) desc = desc.substring(0,57)+'...';
+  if (!desc) desc = text.substring(0,60);
+
+  return {
+    description: desc || text.substring(0,60),
+    calories: totalCal,
+    protein: totalPro,
+    carbs: totalCarb,
+    fat: totalFat,
+    unmatched: unmatched
+  };
+}
+
+function logMealAI(id) {
+  var input = document.getElementById(id+'-ai-in');
+  var text = input.value.trim();
+  if (!text) { showToast('Type what you ate first!', true); return; }
+
+  var result = analyzeMealText(text);
+
+  if (result.calories === 0 && result.protein === 0) {
+    showToast('Food not recognized — try being more specific', true);
+    return;
+  }
+
+  result.time = new Date().toLocaleTimeString('en-US', {hour:'numeric', minute:'2-digit'});
+  var meals = getMeals(id);
+  meals.push(result);
+  saveMeals(id, meals);
+  input.value = '';
+  loadMeals(id);
+
+  var msg = 'Logged! ' + result.calories + ' cal · ' + result.protein + 'g protein 🔥';
+  if (result.unmatched.length) msg += ' (some items not found)';
+  showToast(msg);
 }
 
 function loadMeals(id){
