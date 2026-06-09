@@ -92,16 +92,11 @@ header{background:var(--surface);border-bottom:1px solid var(--border);padding:1
 .ai-thinking.show{display:block;}
 .spinner{display:inline-block;width:13px;height:13px;border:2px solid var(--border);border-top-color:var(--nolon);border-radius:50%;animation:spin 0.8s linear infinite;margin-right:6px;vertical-align:middle;}
 @keyframes spin{to{transform:rotate(360deg)}}
-.meal-list{display:flex;flex-direction:column;gap:7px;max-height:260px;overflow-y:auto;}
-.meal-item{background:var(--card2);border-radius:10px;padding:10px 12px;}
-.meal-desc{font-size:0.8rem;font-weight:600;margin-bottom:5px;}
-.meal-macros{display:flex;gap:6px;flex-wrap:wrap;}
 .mp{font-size:0.6rem;font-weight:600;padding:2px 7px;border-radius:8px;}
 .mp-cal{background:rgba(240,165,0,0.15);color:var(--nolon);}
 .mp-p{background:rgba(40,214,138,0.15);color:var(--green);}
 .mp-c{background:rgba(122,184,232,0.15);color:#7ab8e8;}
 .mp-f{background:rgba(255,107,26,0.15);color:var(--nolon2);}
-.meal-time{font-size:0.6rem;color:var(--muted);margin-top:3px;}
 .hist-list{display:flex;flex-direction:column;gap:7px;max-height:240px;overflow-y:auto;}
 .hist-item{background:var(--card2);border-radius:8px;padding:8px 11px;display:flex;justify-content:space-between;align-items:center;gap:6px;flex-wrap:wrap;}
 .hist-date{font-size:0.66rem;color:var(--muted);min-width:70px;}
@@ -219,7 +214,7 @@ const MEMBERS = [
   {id:'aubrey',name:'Aubrey',emoji:'🌸',cls:'aubrey',goal:'lose',startWeight:null,goalWeight:null,medication:'',calTarget:1600,pTarget:120,cTarget:160,fTarget:55,isTeen:true, isAdult:false,dailyLog:false},
 ];
 const ACCESS = {nolon:['nolon','denise','jr','aubrey'],denise:['nolon','denise','jr','aubrey'],jr:['jr'],aubrey:['aubrey']};
-const KEYS = {data:function(id){return 'boyd_'+id+'_v3';},meals:function(id){return 'boyd_'+id+'_meals_v2';},targets:function(id){return 'boyd_'+id+'_targets_v2';},workouts:function(id){return 'boyd_'+id+'_workouts_v1';},steps:function(id){return 'boyd_'+id+'_steps_v1';},water:function(id){return 'boyd_'+id+'_water_v1';},supps:function(id){return 'boyd_'+id+'_supps_v1';}};
+const KEYS = {data:function(id){return 'boyd_'+id+'_v3';},targets:function(id){return 'boyd_'+id+'_targets_v2';},workouts:function(id){return 'boyd_'+id+'_workouts_v1';},steps:function(id){return 'boyd_'+id+'_steps_v1';},steps:function(id){return 'boyd_'+id+'_steps_v1';}};
 const MUSCLE_GROUPS = ['Chest','Back','Shoulders','Biceps','Triceps','Core','Legs','Glutes','Cardio','Full Body'];
 const EXERCISES = {Chest:['Bench Press','Incline Press','Push-Ups','Cable Fly','Dips'],Back:['Deadlift','Pull-Ups','Barbell Row','Lat Pulldown','Seated Row'],Shoulders:['Overhead Press','Lateral Raise','Front Raise','Face Pull','Shrugs'],Biceps:['Barbell Curl','Hammer Curl','Preacher Curl','Cable Curl'],Triceps:['Skull Crushers','Tricep Pushdown','Close Grip Press','Dips'],Core:['Plank','Crunches','Leg Raise','Cable Crunch','Ab Wheel'],Legs:['Squat','Leg Press','Romanian Deadlift','Leg Curl','Leg Extension','Calf Raise'],Glutes:['Hip Thrust','Glute Bridge','Bulgarian Split Squat','Kickbacks'],Cardio:['Treadmill','Elliptical','Bike','Stair Master','Jump Rope'],FullBody:['Clean and Press','Kettlebell Swing','Burpees','Thrusters']};
 
@@ -314,7 +309,7 @@ function buildPanelHTML(m){
 
   return '<div class="sub-tabs" id="stabs-'+m.id+'">'
     +'<div class="stab active" id="stab-'+m.id+'-weight" onclick="switchTab(\''+m.id+'\',\'weight\')">⚖️ Weight</div>'
-    +'<div class="stab" id="stab-'+m.id+'-meals" onclick="switchTab(\''+m.id+'\',\'meals\')">🍽️ Meals</div>'
+    
     +'<div class="stab" id="stab-'+m.id+'-workout" onclick="switchTab(\''+m.id+'\',\'workout\')">💪 Training</div>'
     +'<div class="stab" id="stab-'+m.id+'-aitools" onclick="switchTab(\''+m.id+'\',\'aitools\')">🤖 AI Tools</div>'
     +'</div>'
@@ -346,37 +341,6 @@ function buildPanelHTML(m){
     +bpChart
     +'<div class="card"><div class="card-title">📋 HISTORY</div><div class="hist-list" id="'+m.id+'-hist"></div></div>'
     +'</div></div>'
-
-    // MEALS TAB
-    +'<div id="'+m.id+'-tab-meals" style="display:none;">'
-    +targetFields
-    +'<div class="card"><div class="card-title">🎯 TODAY\'S MACROS</div>'
-    +'<div class="macro-grid">'
-    +'<div class="mcrd"><div class="mnum" style="color:var(--'+m.cls+')" id="'+m.id+'-cal-used">0</div><div class="mlbl" id="'+m.id+'-cal-lbl">/ '+m.calTarget+' Cal</div><div class="mbar"><div class="mbar-fill" style="background:var(--'+m.cls+')" id="'+m.id+'-cal-bar"></div></div></div>'
-    +'<div class="mcrd"><div class="mnum" style="color:var(--green)" id="'+m.id+'-p-used">0g</div><div class="mlbl" id="'+m.id+'-p-lbl">/ '+m.pTarget+'g Pro</div><div class="mbar"><div class="mbar-fill" style="background:var(--green)" id="'+m.id+'-p-bar"></div></div></div>'
-    +'<div class="mcrd"><div class="mnum" style="color:#7ab8e8" id="'+m.id+'-c-used">0g</div><div class="mlbl" id="'+m.id+'-c-lbl">/ '+m.cTarget+'g Carbs</div><div class="mbar"><div class="mbar-fill" style="background:#7ab8e8" id="'+m.id+'-c-bar"></div></div></div>'
-    +'<div class="mcrd"><div class="mnum" style="color:var(--nolon2)" id="'+m.id+'-f-used">0g</div><div class="mlbl" id="'+m.id+'-f-lbl">/ '+m.fTarget+'g Fat</div><div class="mbar"><div class="mbar-fill" style="background:var(--nolon2)" id="'+m.id+'-f-bar"></div></div></div>'
-    +'</div></div>'
-    +'<div class="card"><div class="card-title">🤖 AI MEAL LOG</div>'
-    +'<p style="font-size:0.73rem;color:var(--muted);margin-bottom:9px;">Type what you ate — Claude calculates macros instantly.</p>'
-    +'<div class="ai-row"><textarea class="ai-ta" id="'+m.id+'-ai-in" placeholder="e.g. 8oz grilled chicken, fried rice, watermelon juice..."></textarea>'
-    +'<button class="ai-btn" id="'+m.id+'-ai-btn" style="background:linear-gradient(135deg,var(--'+m.cls+'),var(--'+m.cls+'2));color:'+btnColor+'" onclick="logMealAI(\''+m.id+'\')">ANALYZE</button></div>'
-    +'<div class="ai-thinking" id="'+m.id+'-ai-thinking"><span class="spinner"></span>Calculating macros...</div>'
-    +'<div class="meal-list" id="'+m.id+'-meal-list"></div>'
-    +'<div style="margin-top:7px;text-align:right;"><button onclick="clearMeals(\''+m.id+'\')" style="background:none;border:none;color:var(--muted);font-size:0.68rem;cursor:pointer;font-family:Barlow,sans-serif;">Clear today\'s log</button></div></div>'
-
-    // WATER + SUPPLEMENTS
-    +'<div class="card"><div class="card-title">💧 WATER INTAKE</div>'
-    +'<p style="font-size:0.72rem;color:var(--muted);margin-bottom:10px;">Tap each cup — goal: 8 cups/day. Critical on medication!</p>'
-    +'<div class="water-grid" id="'+m.id+'-water-grid"></div>'
-    +'<div style="font-size:0.72rem;color:var(--muted);">Logged: <span id="'+m.id+'-water-count" style="color:var(--'+m.cls+');font-weight:700;">0</span> / 8 cups</div></div>'
-    +'<div class="card"><div class="card-title">💊 DAILY SUPPLEMENTS</div>'
-    +'<div class="supp-list" id="'+m.id+'-supp-list"></div>'
-    +'<div style="margin-top:10px;display:flex;gap:8px;">'
-    +'<input type="text" class="finput" id="'+m.id+'-supp-in" placeholder="Add supplement/medication..." style="flex:1;">'
-    +'<button class="btn btn-'+m.cls+' btn-sm" onclick="addSupp(\''+m.id+'\')">ADD</button></div></div>'
-    +'</div>'
-
     // TRAINING TAB
     +'<div id="'+m.id+'-tab-workout" style="display:none;">'
     +'<div id="'+m.id+'-plateau-banner" class="plateau-banner">⚠️ <strong>Plateau Detected!</strong> Your weight hasn\'t moved in 10+ days. Tap AI Tools → Plateau Buster for a fix.</div>'
@@ -447,20 +411,15 @@ function initApp(){
   MEMBERS.filter(function(x){return allowed.includes(x.id);}).forEach(function(mem){
     var ldEl=document.getElementById(mem.id+'-ld');if(ldEl)ldEl.value=today;
     var wdEl=document.getElementById(mem.id+'-wdate');if(wdEl)wdEl.value=today;
-    loadPerson(mem.id);loadMeals(mem.id);loadTargets(mem.id);
+    loadPerson(mem.id);loadTargets(mem.id);
     initWorkoutSets(mem.id);renderWorkoutHistory(mem.id);renderPRs(mem.id);
-    renderSteps(mem.id);initWater(mem.id);initSupps(mem.id);
+    renderSteps(mem.id);
   });
 }
 
 // ── DATA HELPERS ──
 function getData(id){try{return JSON.parse(localStorage.getItem(KEYS.data(id)))||null;}catch(e){return null;}}
 function saveData(id,d){localStorage.setItem(KEYS.data(id),JSON.stringify(d));}
-function getMeals(id){try{var d=JSON.parse(localStorage.getItem(KEYS.meals(id)));var today=new Date().toISOString().split('T')[0];return(d&&d.date===today)?d.meals:[];}catch(e){return[];}}
-function saveMeals(id,meals){localStorage.setItem(KEYS.meals(id),JSON.stringify({date:new Date().toISOString().split('T')[0],meals:meals}));}
-function getTargets(id){try{return JSON.parse(localStorage.getItem(KEYS.targets(id)))||null;}catch(e){return null;}}
-function getWorkouts(id){try{return JSON.parse(localStorage.getItem(KEYS.workouts(id)))||[];}catch(e){return[];}}
-function saveWorkouts(id,w){localStorage.setItem(KEYS.workouts(id),JSON.stringify(w));}
 function getSteps(id){try{return JSON.parse(localStorage.getItem(KEYS.steps(id)))||{};}catch(e){return {};}}
 function saveSteps(id,s){localStorage.setItem(KEYS.steps(id),JSON.stringify(s));}
 function getWater(id){try{var d=JSON.parse(localStorage.getItem(KEYS.water(id)));var today=new Date().toISOString().split('T')[0];return(d&&d.date===today)?d.cups:0;}catch(e){return 0;}}
@@ -479,7 +438,7 @@ function switchPerson(id){
 function switchTab(id,tab){
   var m=MEMBERS.find(function(x){return x.id===id;});
   var col=getColor(id);
-  ['weight','meals','workout','aitools'].forEach(function(t){
+  ['weight','workout','aitools'].forEach(function(t){
     var st=document.getElementById('stab-'+id+'-'+t);
     var pn=document.getElementById(id+'-tab-'+t);
     var isActive=t===tab;
@@ -618,8 +577,8 @@ function logWeight(id){
   var d=getData(id);if(!d)return;
   var di=d.entries.findIndex(function(e){return e.date===date;});
   var entry={date:date,weight:weight,workouts:workouts,calories:calories,sys:sys,dia:dia,notes:notes};
-  if(di>=0){d.entries[di]=entry;showToast('Entry updated!');}
-  else{d.entries.push(entry);showToast('Entry logged! 🔥');}
+  if(di>=0){d.entries[di]=entry;showToast('✅ Updated & saved!');}
+  else{d.entries.push(entry);showToast('✅ Logged & saved! 🔥');}
   saveData(id,d);
   ['lw','lwk','lc','ln'].forEach(function(f){var el=document.getElementById(id+'-'+f);if(el)el.value='';});
   if(sysEl)sysEl.value='';if(diaEl)diaEl.value='';
@@ -634,258 +593,16 @@ function saveTargets(id){
   var c=parseInt(document.getElementById(id+'-tc')?document.getElementById(id+'-tc').value:0)||0;
   var f=parseInt(document.getElementById(id+'-tf')?document.getElementById(id+'-tf').value:0)||0;
   localStorage.setItem(KEYS.targets(id),JSON.stringify({cal:cal,p:p,c:c,f:f}));
-  updateMacroLabels(id,{cal:cal,p:p,c:c,f:f});loadMeals(id);
+  updateMacroLabels(id,{cal:cal,p:p,c:c,f:f});
 }
 function loadTargets(id){var t=getTargets(id);if(!t)return;var m=MEMBERS.find(function(x){return x.id===id;});['tcal','tp','tc','tf'].forEach(function(f,i){var el=document.getElementById(id+'-'+f);var vals=[t.cal,t.p,t.c,t.f];if(el&&vals[i])el.value=vals[i];});updateMacroLabels(id,t);}
 function updateMacroLabels(id,t){var m=MEMBERS.find(function(x){return x.id===id;});var cal=t.cal||m.calTarget,p=t.p||m.pTarget,c=t.c||m.cTarget,f=t.f||m.fTarget;[['cal-lbl','/ '+cal+' Cal'],['p-lbl','/ '+p+'g Pro'],['c-lbl','/ '+c+'g Carbs'],['f-lbl','/ '+f+'g Fat']].forEach(function(pair){var el=document.getElementById(id+'-'+pair[0]);if(el)el.textContent=pair[1];});}
 function getEffectiveTargets(id){var t=getTargets(id);var m=MEMBERS.find(function(x){return x.id===id;});return{cal:t&&t.cal?t.cal:m.calTarget,p:t&&t.p?t.p:m.pTarget,c:t&&t.c?t.c:m.cTarget,f:t&&t.f?t.f:m.fTarget};}
 
 // ── AI MEAL ──
-// ── NUTRITION DATABASE (per oz or per unit as noted) ──
-var NUTRITION_DB = [
-  // PROTEINS (per oz)
-  {keys:['chicken breast','chicken','grilled chicken','baked chicken'],cal_oz:31,pro_oz:6.5,carb_oz:0,fat_oz:0.4},
-  {keys:['chicken thigh','chicken thighs'],cal_oz:40,pro_oz:5.5,carb_oz:0,fat_oz:2},
-  {keys:['ground beef','beef','93/7','lean beef'],cal_oz:50,pro_oz:7,carb_oz:0,fat_oz:2.5},
-  {keys:['sirloin','steak','flank steak','flank','sirloin steak'],cal_oz:45,pro_oz:7,carb_oz:0,fat_oz:2},
-  {keys:['salmon','grilled salmon'],cal_oz:42,pro_oz:5.8,carb_oz:0,fat_oz:2},
-  {keys:['tilapia','white fish'],cal_oz:30,pro_oz:6,carb_oz:0,fat_oz:0.5},
-  {keys:['shrimp'],cal_oz:28,pro_oz:5.5,carb_oz:0.3,fat_oz:0.3},
-  {keys:['turkey','ground turkey'],cal_oz:45,pro_oz:7,carb_oz:0,fat_oz:1.5},
-  {keys:['tuna','canned tuna'],cal_oz:35,pro_oz:7,carb_oz:0,fat_oz:0.5},
-  // EGGS (per egg)
-  {keys:['whole egg','egg','eggs'],cal_each:70,pro_each:6,carb_each:0.5,fat_each:5,unit:'egg'},
-  {keys:['egg white','egg whites','white'],cal_each:17,pro_each:3.5,carb_each:0.2,fat_each:0,unit:'egg white'},
-  {keys:['hard boiled egg','boiled egg','hard boiled'],cal_each:70,pro_each:6,carb_each:0.5,fat_each:5,unit:'egg'},
-  // CARBS
-  {keys:['white rice','fried rice','rice'],cal_cup:200,pro_cup:4,carb_cup:44,fat_cup:0.5,unit:'cup'},
-  {keys:['brown rice'],cal_cup:215,pro_cup:5,carb_cup:45,fat_cup:1.5,unit:'cup'},
-  {keys:['potato','baked potato','white potato'],cal_oz:26,pro_oz:0.7,carb_oz:6,fat_oz:0},
-  {keys:['sweet potato'],cal_oz:26,pro_oz:0.5,carb_oz:6,fat_oz:0},
-  {keys:['oats','oatmeal'],cal_cup:300,pro_cup:10,carb_cup:54,fat_cup:5,unit:'cup'},
-  {keys:['bread','white bread','slice'],cal_each:80,pro_each:3,carb_each:15,fat_each:1,unit:'slice'},
-  {keys:['pasta','spaghetti'],cal_cup:220,pro_cup:8,carb_cup:43,fat_cup:1.5,unit:'cup'},
-  {keys:['quinoa'],cal_cup:222,pro_cup:8,carb_cup:39,fat_cup:4,unit:'cup'},
-  // DAIRY
-  {keys:['greek yogurt','nonfat greek yogurt','yogurt'],cal_cup:130,pro_cup:22,carb_cup:9,fat_cup:0.5,unit:'cup'},
-  {keys:['cottage cheese','low fat cottage cheese'],cal_cup:200,pro_cup:28,carb_cup:8,fat_cup:4,unit:'cup'},
-  {keys:['milk','whole milk'],cal_cup:150,pro_cup:8,carb_cup:12,fat_cup:8,unit:'cup'},
-  {keys:['cheddar cheese','cheese','shredded cheese'],cal_oz:114,pro_oz:7,carb_oz:0.5,fat_oz:9},
-  {keys:['butter'],cal_tbsp:100,pro_tbsp:0,carb_tbsp:0,fat_tbsp:11,unit:'tbsp'},
-  // PROTEIN SUPPLEMENTS
-  {keys:['whey protein','protein shake','protein powder','scoop whey','whey'],cal_each:120,pro_each:25,carb_each:3,fat_each:1,unit:'scoop'},
-  // FRUITS & JUICES
-  {keys:['watermelon juice','watermelon'],cal_cup:80,pro_cup:1,carb_cup:20,fat_cup:0,unit:'cup'},
-  {keys:['orange juice','oj'],cal_cup:110,pro_cup:2,carb_cup:26,fat_cup:0,unit:'cup'},
-  {keys:['banana'],cal_each:105,pro_each:1.3,carb_each:27,fat_each:0.3,unit:'banana'},
-  {keys:['apple'],cal_each:95,pro_each:0.5,carb_each:25,fat_each:0.3,unit:'apple'},
-  {keys:['blueberries','strawberries','berries'],cal_cup:84,pro_cup:1,carb_cup:21,fat_cup:0.5,unit:'cup'},
-  // VEGETABLES
-  {keys:['broccoli','steamed broccoli'],cal_cup:55,pro_cup:3.7,carb_cup:11,fat_cup:0.6,unit:'cup'},
-  {keys:['spinach','sauteed spinach'],cal_cup:40,pro_cup:5,carb_cup:6,fat_cup:0.5,unit:'cup'},
-  {keys:['green beans'],cal_cup:44,pro_cup:2,carb_cup:10,fat_cup:0.3,unit:'cup'},
-  {keys:['asparagus'],cal_cup:40,pro_cup:4,carb_cup:7,fat_cup:0.2,unit:'cup'},
-  {keys:['peppers','bell peppers'],cal_cup:46,pro_cup:1.5,carb_cup:9,fat_cup:0.4,unit:'cup'},
-  {keys:['onion','onions'],cal_cup:64,pro_cup:1.5,carb_cup:15,fat_cup:0.2,unit:'cup'},
-  {keys:['cucumber'],cal_cup:16,pro_cup:0.7,carb_cup:3.5,fat_cup:0.1,unit:'cup'},
-  // FATS & OILS
-  {keys:['olive oil','avocado oil','sesame oil','coconut oil','oil'],cal_tbsp:120,pro_tbsp:0,carb_tbsp:0,fat_tbsp:14,unit:'tbsp'},
-  {keys:['almonds','almond'],cal_oz:164,pro_oz:6,carb_oz:6,fat_oz:14},
-  {keys:['walnuts','walnut'],cal_oz:185,pro_oz:4,carb_oz:4,fat_oz:18},
-  {keys:['cashews','cashew'],cal_oz:157,pro_oz:5,carb_oz:9,fat_oz:12},
-  {keys:['peanut butter','peanut'],cal_tbsp:95,pro_tbsp:4,carb_tbsp:3,fat_tbsp:8,unit:'tbsp'},
-  {keys:['avocado'],cal_each:240,pro_each:3,carb_each:13,fat_each:22,unit:'avocado'},
-  // SAUCES & EXTRAS
-  {keys:['soy sauce'],cal_tbsp:10,pro_tbsp:1,carb_tbsp:1,fat_tbsp:0,unit:'tbsp'},
-  {keys:['salsa'],cal_tbsp:5,pro_tbsp:0.2,carb_tbsp:1,fat_tbsp:0,unit:'tbsp'},
-  {keys:['hot sauce'],cal_tbsp:5,pro_tbsp:0,carb_tbsp:0.5,fat_tbsp:0,unit:'tbsp'},
-  {keys:['black beans','beans'],cal_cup:227,pro_cup:15,carb_cup:41,fat_cup:0.9,unit:'cup'},
-  {keys:['rice cake'],cal_each:35,pro_each:0.7,carb_each:7,fat_each:0.3,unit:'rice cake'},
-];
-
-// Unit parsers
-var FRACTIONS = {'1/8':0.125,'1/4':0.25,'1/3':0.333,'1/2':0.5,'2/3':0.667,'3/4':0.75};
-var UNIT_MAP = {
-  'oz':1,'ounce':1,'ounces':1,
-  'cup':1,'cups':1,
-  'tbsp':1,'tablespoon':1,'tablespoons':1,
-  'tsp':0.333,'teaspoon':0.333,
-  'scoop':1,'scoops':1,
-  'slice':1,'slices':1,
-  'egg':1,'eggs':1,
-  'banana':1,'apple':1,'avocado':1,'piece':1,
-  'quart':4,'qt':4,'pint':2,'pt':2,'liter':4.2,'litre':4.2,
-  'lb':16,'lbs':16,'pound':16,'pounds':16,
-  'g':0.0353,'gram':0.0353,'grams':0.0353,
-  'ml':0.00423,'cc':0.00423,
-};
-
-function parseAmount(str) {
-  str = str.trim();
-  // Check fractions first
-  for (var f in FRACTIONS) {
-    if (str.indexOf(f) === 0) {
-      var rest = str.replace(f,'').trim();
-      var num = parseFloat(rest);
-      return FRACTIONS[f] + (isNaN(num)?0:num);
-    }
-  }
-  var n = parseFloat(str);
-  return isNaN(n) ? 1 : n;
-}
-
-function findFood(text) {
-  var lower = text.toLowerCase();
-  var best = null; var bestScore = 0;
-  for (var i=0; i<NUTRITION_DB.length; i++) {
-    var item = NUTRITION_DB[i];
-    for (var j=0; j<item.keys.length; j++) {
-      if (lower.indexOf(item.keys[j]) >= 0) {
-        var score = item.keys[j].length;
-        if (score > bestScore) { bestScore = score; best = item; }
-      }
-    }
-  }
-  return best;
-}
-
-function parseQuantityAndUnit(text) {
-  // Match patterns like "8oz", "8 oz", "1/2 cup", "2 cups", "1 scoop", "3 eggs"
-  var patterns = [
-    /(\d+\.?\d*|\d*\/\d+)\s*(quart|qt|pint|pt|liter|litre|pound|pounds|lb|lbs|gram|grams|g\b|ml|cc|ounce|ounces|oz|cups?|tbsp|tablespoons?|tsps?|teaspoons?|scoops?|slices?|eggs?|bananas?|apples?|avocados?|pieces?)/i,
-  ];
-  for (var i=0; i<patterns.length; i++) {
-    var m = text.match(patterns[i]);
-    if (m) {
-      var amt = parseAmount(m[1]);
-      var unit = m[2].toLowerCase().replace(/s$/,'');
-      var multiplier = UNIT_MAP[unit] || UNIT_MAP[unit+'s'] || 1;
-      return { amount: amt, unit: unit, multiplier: multiplier };
-    }
-  }
-  // Default: assume 1 serving
-  return { amount: 1, unit: 'serving', multiplier: 1 };
-}
-
-function calcNutrition(food, qty) {
-  var amt = qty.amount * qty.multiplier;
-  // Per oz food
-  if (food.cal_oz !== undefined) {
-    return { cal: Math.round(food.cal_oz * amt), pro: Math.round(food.pro_oz * amt), carb: Math.round(food.carb_oz * amt), fat: Math.round(food.fat_oz * amt) };
-  }
-  // Per cup
-  if (food.cal_cup !== undefined) {
-    // If unit was oz convert: 1 cup = 8 oz
-    var cups = (qty.unit==='oz'||qty.unit==='ounce') ? amt/8 : amt;
-    return { cal: Math.round(food.cal_cup * cups), pro: Math.round(food.pro_cup * cups), carb: Math.round(food.carb_cup * cups), fat: Math.round(food.fat_cup * cups) };
-  }
-  // Per tbsp
-  if (food.cal_tbsp !== undefined) {
-    var tbsps = (qty.unit==='oz'||qty.unit==='ounce') ? amt*2 : amt;
-    return { cal: Math.round(food.cal_tbsp * tbsps), pro: Math.round(food.pro_tbsp * tbsps), carb: Math.round(food.carb_tbsp * tbsps), fat: Math.round(food.fat_tbsp * tbsps) };
-  }
-  // Per each (egg, scoop, banana etc)
-  if (food.cal_each !== undefined) {
-    return { cal: Math.round(food.cal_each * amt), pro: Math.round(food.pro_each * amt), carb: Math.round(food.carb_each * amt), fat: Math.round(food.fat_each * amt) };
-  }
-  return { cal: 0, pro: 0, carb: 0, fat: 0 };
-}
-
-function analyzeMealText(text) {
-  // Split by commas, "and", newlines
-  var parts = text.split(/,|\band\b|\n/);
-  var totalCal=0, totalPro=0, totalCarb=0, totalFat=0;
-  var matched = [];
-  var unmatched = [];
-
-  parts.forEach(function(part) {
-    part = part.trim();
-    if (!part) return;
-    var food = findFood(part);
-    if (food) {
-      var qty = parseQuantityAndUnit(part);
-      var n = calcNutrition(food, qty);
-      totalCal += n.cal; totalPro += n.pro; totalCarb += n.carb; totalFat += n.fat;
-      matched.push(part);
-    } else {
-      unmatched.push(part);
-    }
-  });
-
-  // Build description from matched items
-  var desc = matched.slice(0,3).map(function(p){
-    return p.replace(/^\d+\.?\d*\s*(\/\d+)?\s*/,'').replace(/^(oz|cup|tbsp|scoop|egg|slice)\s*/i,'').trim();
-  }).join(', ');
-  if (desc.length > 60) desc = desc.substring(0,57)+'...';
-  if (!desc) desc = text.substring(0,60);
-
-  return {
-    description: desc || text.substring(0,60),
-    calories: totalCal,
-    protein: totalPro,
-    carbs: totalCarb,
-    fat: totalFat,
-    unmatched: unmatched
-  };
-}
-
-function logMealAI(id) {
-  var input = document.getElementById(id+'-ai-in');
-  var text = input.value.trim();
-  if (!text) { showToast('Type what you ate first!', true); return; }
-
-  var result = analyzeMealText(text);
-
-  if (result.calories === 0 && result.protein === 0) {
-    showToast('Food not recognized — try being more specific', true);
-    return;
-  }
-
-  result.time = new Date().toLocaleTimeString('en-US', {hour:'numeric', minute:'2-digit'});
-  var meals = getMeals(id);
-  meals.push(result);
-  saveMeals(id, meals);
-  input.value = '';
-  loadMeals(id);
-
-  var msg = 'Logged! ' + result.calories + ' cal · ' + result.protein + 'g protein 🔥';
-  if (result.unmatched.length) msg += ' (some items not found)';
-  showToast(msg);
-}
-
-function loadMeals(id){
-  var meals=getMeals(id);var list=document.getElementById(id+'-meal-list');var t=getEffectiveTargets(id);
-  var totals=meals.reduce(function(a,m){return{cal:a.cal+(m.calories||0),p:a.p+(m.protein||0),c:a.c+(m.carbs||0),f:a.f+(m.fat||0)};},{cal:0,p:0,c:0,f:0});
-  function s(elId,val){var el=document.getElementById(elId);if(el)el.textContent=val;}
-  function b(elId,pct){var el=document.getElementById(elId);if(el)el.style.width=Math.min(100,pct)+'%';}
-  s(id+'-cal-used',totals.cal);s(id+'-p-used',totals.p+'g');s(id+'-c-used',totals.c+'g');s(id+'-f-used',totals.f+'g');
-  if(t.cal){b(id+'-cal-bar',totals.cal/t.cal*100);b(id+'-p-bar',totals.p/t.p*100);b(id+'-c-bar',totals.c/t.c*100);b(id+'-f-bar',totals.f/t.f*100);}
-  if(!list)return;
-  var m=MEMBERS.find(function(x){return x.id===id;});
-  if(!meals.length){list.innerHTML='<div class="empty-state">No meals logged today 👆</div>';return;}
-  list.innerHTML=meals.map(function(ml,i){return '<div class="meal-item" style="border-left:3px solid var(--'+m.cls+')"><div style="display:flex;justify-content:space-between;"><div class="meal-desc">'+ml.description+'</div><button class="del-btn" onclick="deleteMeal(\''+id+'\','+i+')">✕</button></div><div class="meal-macros"><span class="mp mp-cal">🔥 '+ml.calories+'</span><span class="mp mp-p">🥩 '+ml.protein+'g</span><span class="mp mp-c">🍚 '+ml.carbs+'g</span><span class="mp mp-f">🫒 '+ml.fat+'g</span></div><div class="meal-time">⏰ '+ml.time+'</div></div>';}).join('');
-}
-function deleteMeal(id,idx){var meals=getMeals(id);meals.splice(idx,1);saveMeals(id,meals);loadMeals(id);showToast('Removed.');}
-function clearMeals(id){saveMeals(id,[]);loadMeals(id);showToast('Cleared.');}
 
 // ── WATER ──
-function initWater(id){renderWater(id);}
-function renderWater(id){
-  var cups=getWater(id);var grid=document.getElementById(id+'-water-grid');if(!grid)return;
-  var m=MEMBERS.find(function(x){return x.id===id;});
-  var html='';
-  for(var i=0;i<8;i++){html+='<div class="water-cup'+(i<cups?' filled':'')+'" onclick="toggleWater(\''+id+'\','+i+')">💧</div>';}
-  grid.innerHTML=html;
-  var cnt=document.getElementById(id+'-water-count');if(cnt)cnt.textContent=cups;
-}
-function toggleWater(id,idx){
-  var cups=getWater(id);
-  var newCups=idx<cups?idx:idx+1;
-  saveWater(id,newCups);renderWater(id);
-  if(newCups>=8)showToast('💧 Hydration goal hit!');
-}
 
-// ── SUPPLEMENTS ──
 function initSupps(id){renderSupps(id);}
 function renderSupps(id){
   var supps=getSupps(id);var list=document.getElementById(id+'-supp-list');if(!list)return;
