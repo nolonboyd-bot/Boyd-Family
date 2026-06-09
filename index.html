@@ -734,8 +734,379 @@ function renderSteps(id){
   if(todayEl)todayEl.textContent=(steps[today]||0).toLocaleString();
 }
 
-var _a = ['sk-ant-api03-zRV1adcSJVg6q6jX22ZWjDh06vtdnCF6q2EdN3NH1fyt8-52yPwi9Ck_BnCRo3UjyWbYSDVEoRR2f7ovMZG8UQ','NSfeEAAA'].join('-');
-var API_KEY = _a;
+// ── SMART LOCAL AI TOOLS ──
+
+var FORM_DB = {
+  'deadlift':{'setup':'Stand with feet hip-width, bar over mid-foot. Grip just outside legs. Hips higher than knees, chest up, neutral spine.','steps':['Push floor away (don\'t think "pull")','Drive hips forward as bar passes knees','Keep bar dragging up your shins and thighs','Lock out hips and knees at top — don\'t hyperextend','Hinge back down, push hips back first'],'breathing':'Big breath in before lift, brace core hard, exhale at top','mistakes':['Rounding lower back — MOST COMMON and dangerous','Bar drifting away from body','Jerking the bar — build tension first','Looking up too high — strains neck'],'prevention':'Never sacrifice form for weight. If lower back rounds, drop weight 20%. Wear a belt once comfortable with form.','modification':'Romanian Deadlift with lighter weight to build hamstring flexibility first.','advanced':'Deficit deadlift, sumo stance, pause deadlift at knee'},
+  'squat':{'setup':'Bar on upper traps (high bar) or rear delts (low bar). Feet shoulder-width, toes 15-30° out. Core braced.','steps':['Break at hips and knees simultaneously','Push knees out in line with toes','Descend until hips are at or below parallel','Drive up through full foot — not just heels','Keep chest tall throughout'],'breathing':'Breath in at top, brace (Valsalva), exhale past sticking point','mistakes':['Knees caving inward (valgus)','Heels rising — ankle mobility issue','Forward lean — thoracic mobility issue','Not hitting depth'],'prevention':'Stretch hip flexors and ankles daily. Box squats teach proper depth. Don\'t let ego dictate weight.','modification':'Goblet squat or box squat to learn movement pattern.','advanced':'Pause squat, front squat, Bulgarian split squat'},
+  'bench press':{'setup':'Lie with eyes under bar. Grip slightly wider than shoulder-width. Feet flat, arch natural, shoulder blades pinched together and pulled down.','steps':['Unrack with straight arms','Lower bar to lower chest in slight arc','Touch chest lightly — no bounce','Press in reverse arc back to start','Keep elbows at 45-75° from torso'],'breathing':'Inhale on the way down, exhale as you press up','mistakes':['Flaring elbows 90° — shoulder injury risk','Bouncing bar off chest','Lifting hips off bench','Not retracting shoulder blades'],'prevention':'Keep shoulders packed down and back throughout. Never flare elbows. Use a spotter for heavy sets.','modification':'Dumbbell press allows more natural wrist/elbow angle.','advanced':'Pause bench, close-grip bench, incline press'},
+  'overhead press':{'setup':'Bar at shoulder height, just above collarbone. Grip just outside shoulders. Core braced, glutes tight, slight lean back.','steps':['Press straight up — bar goes in front of face on way up','Clear your head, then press up and slightly back','Finish with bar over mid-foot, arms locked','Lower with control back to collarbone'],'breathing':'Brace and exhale as you press','mistakes':['Excessive lower back arch — core weakness','Pressing in front of body the whole way','Soft elbows at lockout','Bar path too far forward'],'prevention':'Strengthen core to prevent back arching. Don\'t load more than you can press with neutral spine.','modification':'Dumbbell seated press takes lower back out of equation.','advanced':'Push press, behind-neck press, Z-press'},
+  'pull up':{'setup':'Hang from bar, hands slightly wider than shoulders, palms facing away. Full dead hang to start.','steps':['Engage lats — think "bend the bar" or "elbows to hips"','Pull until chin clears bar','Control the descent — 2-3 seconds down','Full dead hang at bottom before next rep'],'breathing':'Exhale as you pull up, inhale on the way down','mistakes':['Kipping without strength base','Not reaching full extension at bottom','Shrugging shoulders instead of depressing them','Using momentum'],'prevention':'Build lat strength with lat pulldowns first. Dead hangs improve grip and shoulder health.','modification':'Band-assisted pull-ups or lat pulldown machine.','advanced':'Weighted pull-ups, archer pull-ups, L-sit pull-ups'},
+  'hip thrust':{'setup':'Upper back on bench, bar padded across hips, feet hip-width flat on floor, chin tucked.','steps':['Drive through heels','Squeeze glutes HARD at top','Hips should be parallel to floor at top','Hold 1 second at peak contraction','Lower with control'],'breathing':'Exhale as you thrust up, inhale on the way down','mistakes':['Hyperextending lower back at top','Not squeezing glutes — just using lower back','Feet too far or too close','Looking up straining neck — chin tucked'],'prevention':'Start with bodyweight to nail form. Heavy hip thrusts can strain lower back if done wrong.','modification':'Glute bridge on floor is a great starting point.','advanced':'Single-leg hip thrust, banded hip thrust, pause at top'},
+  'row':{'setup':'Hinge at hips 45°, neutral spine, bar hanging straight down from shoulders. Grip shoulder-width.','steps':['Pull bar to lower chest/upper abs','Lead with elbows — squeeze shoulder blades together','Hold contraction 1 second','Lower with control to full arm extension'],'breathing':'Exhale as you row, inhale on the way down','mistakes':['Rounding back — most common','Using momentum/swinging','Not retracting shoulder blades','Pulling to the wrong spot on torso'],'prevention':'Keep back flat and core tight. Drop weight before compromising form.','modification':'Seated cable row or chest-supported row eliminates lower back fatigue.','advanced':'Pendlay row, Kroc row, single-arm dumbbell row'},
+  'plank':{'setup':'Forearms on ground, elbows under shoulders. Body in straight line from head to heels. Feet together or shoulder-width.','steps':['Brace core like you\'re about to get punched','Squeeze glutes','Keep hips level — no sagging or piking','Breathe steadily','Hold target time'],'breathing':'Steady, controlled breathing throughout','mistakes':['Hips sagging — most common','Hips too high (piking)','Holding breath','Looking up straining neck — neutral spine'],'prevention':'Stop when form breaks. A 20-second perfect plank beats a 60-second sloppy one.','modification':'Knee plank or incline plank on a bench.','advanced':'Plank with shoulder taps, RKC plank, plank with leg raise'},
+  'curl':{'setup':'Stand with dumbbells/barbell, arms fully extended, palms forward. Feet shoulder-width, core braced.','steps':['Curl weight up keeping elbows pinned to sides','Supinate wrists at top (turn palms up)','Squeeze bicep hard at top','Lower with control — 3 seconds down'],'breathing':'Exhale as you curl up, inhale on the way down','mistakes':['Swinging/using momentum','Elbows drifting forward','Not fully extending at bottom','Rushing the eccentric (lowering)'],'prevention':'The eccentric (lowering) builds more muscle. Slow it down. Control the weight, don\'t let it control you.','modification':'Preacher curl eliminates cheating.','advanced':'Incline dumbbell curl, drag curl, 21s'},
+  'lunge':{'setup':'Stand tall, step forward with one foot landing heel first. Back knee hovers above floor.','steps':['Step forward with control','Lower back knee toward floor — don\'t let it slam','Front knee stays above ankle — not past toes','Push through front heel to return to start','Alternate legs or complete all reps one side'],'breathing':'Exhale as you push back up','mistakes':['Front knee caving inward','Trunk leaning forward','Step too short — knee goes past toes','Back knee slamming floor'],'prevention':'Start with bodyweight. Keep torso upright. Strengthen glutes to prevent knee cave.','modification':'Reverse lunge is easier on knees than forward lunge.','advanced':'Bulgarian split squat, walking lunges with weight, deficit lunge'},
+};
+
+function showResult(resultId, html) {
+  var el = document.getElementById(resultId);
+  if (el) { el.innerHTML = html; el.classList.add('show'); }
+}
+
+function hideThinking(thinkingId) {
+  var el = document.getElementById(thinkingId);
+  if (el) el.classList.remove('show');
+}
+
+function showThinking(thinkingId) {
+  var el = document.getElementById(thinkingId);
+  if (el) el.classList.add('show');
+}
+
+function makeCard(color, icon, title, content) {
+  return '<div style="background:var(--card2);border-radius:10px;padding:13px;margin-bottom:10px;border-left:4px solid '+color+';">'
+    +'<div style="font-family:\'Bebas Neue\',sans-serif;font-size:0.88rem;letter-spacing:2px;color:'+color+';margin-bottom:7px;">'+icon+' '+title+'</div>'
+    +'<div style="font-size:0.78rem;color:#ccd;line-height:1.65;">'+content+'</div></div>';
+}
+
+function makeList(items) {
+  return '<ul style="margin-left:14px;">'+items.map(function(i){return '<li style="margin-bottom:3px;">'+i+'</li>';}).join('')+'</ul>';
+}
+
+// ── WEEKLY REVIEW (smart local) ──
+function getWeeklyReview(id) {
+  var d = getData(id);
+  if (!d || !d.entries || !d.entries.length) { showToast('Log at least one entry first!', true); return; }
+  var m = MEMBERS.find(function(x){return x.id===id;});
+  var t = getEffectiveTargets(id);
+  var sorted = d.entries.slice().sort(function(a,b){return new Date(a.date)-new Date(b.date);});
+  var latest = sorted[sorted.length-1];
+  var prev = sorted.length > 1 ? sorted[sorted.length-2] : null;
+  var resultEl = document.getElementById(id+'-review-result');
+  if (resultEl) { resultEl.classList.remove('show'); resultEl.innerHTML = ''; }
+
+  // Calculate stats
+  var totalLost = (d.startWeight - latest.weight).toFixed(1);
+  var isGain = m.goal === 'gain';
+  var weekChange = prev ? (latest.weight - prev.weight).toFixed(1) : null;
+  var weekChangeLbs = weekChange ? Math.abs(parseFloat(weekChange)) : 0;
+  var isMovingRight = isGain ? parseFloat(weekChange) > 0 : parseFloat(weekChange) < 0;
+  var workouts = getWorkouts(id);
+  var d7 = new Date(); d7.setDate(d7.getDate()-7);
+  var recentWOs = workouts.filter(function(w){return new Date(w.date+'T00:00:00')>=d7;});
+  var pctToGoal = Math.min(100, Math.max(0, Math.abs(d.startWeight-latest.weight)/Math.abs(d.startWeight-d.goalWeight)*100)).toFixed(1);
+
+  // Status determination
+  var status, statusColor, statusIcon;
+  if (!prev) {
+    status = 'First entry logged — great start!'; statusColor = 'var(--jr)'; statusIcon = '🚀';
+  } else if (isMovingRight && weekChangeLbs >= 1.5) {
+    status = 'GREAT PROGRESS — ahead of schedule!'; statusColor = 'var(--green)'; statusIcon = '🏆';
+  } else if (isMovingRight && weekChangeLbs >= 0.5) {
+    status = 'ON TRACK — keep doing what you\'re doing!'; statusColor = 'var(--green)'; statusIcon = '✅';
+  } else if (weekChangeLbs < 0.3) {
+    status = 'PLATEAU — time to shake things up!'; statusColor = 'var(--red)'; statusIcon = '⚠️';
+  } else {
+    status = 'NEEDS ADJUSTMENT — small tweaks needed.'; statusColor = 'var(--nolon)'; statusIcon = '🔧';
+  }
+
+  // Build diet adjustments based on actual data
+  var dietTweaks = [];
+  if (latest.calories && latest.calories > t.cal + 100) {
+    dietTweaks.push('You logged ' + latest.calories + ' cal vs your ' + t.cal + ' target — pull back by ' + (latest.calories - t.cal) + ' cal. Cut from carbs first.');
+  } else if (latest.calories && latest.calories < t.cal - 200) {
+    dietTweaks.push('Only logged ' + latest.calories + ' cal — too low. Undereating kills muscle. Hit your ' + t.cal + ' cal target every day.');
+  } else {
+    dietTweaks.push('Calories look good. Focus on hitting your ' + t.p + 'g protein target — it\'s the most important number.');
+  }
+  if (!isMovingRight && !isGain) {
+    dietTweaks.push('Try a 2-day calorie cycle: 1,500 cal on rest days, ' + t.cal + ' cal on training days to kickstart fat burning.');
+    dietTweaks.push('Add 30 min fasted cardio 3x this week before eating — powerful for breaking stalls on retatrutide.');
+  }
+  if (isGain && weekChangeLbs < 0.5) {
+    dietTweaks.push('Gaining requires eating MORE than you burn. Add 300 cal on training days — extra rice, protein shake, or peanut butter.');
+    dietTweaks.push('Make sure you\'re hitting ' + t.p + 'g protein EVERY day. No protein = no muscle growth, period.');
+  }
+  dietTweaks.push('Drink at least 100oz of water daily — especially critical on retatrutide to prevent dehydration and support fat loss.');
+
+  // Training adjustments
+  var trainingTweaks = [];
+  if (recentWOs.length < 3 && !m.isTeen) {
+    trainingTweaks.push('Only ' + recentWOs.length + ' workout(s) this week — aim for 4. Missing sessions is the #1 reason for slow progress.');
+  } else if (recentWOs.length >= 4) {
+    trainingTweaks.push('Strong workout week with ' + recentWOs.length + ' sessions — keep that consistency!');
+  }
+  if (!isMovingRight) {
+    trainingTweaks.push('Add 20 min of walking after dinner — low impact, burns extra calories, and helps digestion.');
+    trainingTweaks.push('Increase weights by 5-10% this week. Progressive overload is key — your body adapts to the same stimulus.');
+  } else {
+    trainingTweaks.push('Keep increasing weights weekly. Even 2.5lbs more per exercise builds significant strength over months.');
+  }
+
+  var html = makeCard(statusColor, statusIcon, status,
+    '<strong>Progress:</strong> ' + (isGain ? '+' : '-') + Math.abs(totalLost) + ' lbs from start (' + pctToGoal + '% of goal)'
+    + (weekChange ? ' | This period: ' + (parseFloat(weekChange)>0?'+':'') + weekChange + ' lbs' : '')
+  );
+  html += makeCard('var(--nolon)', '🍽️', 'DIET ADJUSTMENTS', makeList(dietTweaks));
+  html += makeCard('var(--jr)', '💪', 'TRAINING ADJUSTMENTS', makeList(trainingTweaks));
+
+  var nextFocus = isMovingRight
+    ? 'Stay consistent — don\'t change what\'s working. Log every day and keep workouts on schedule.'
+    : 'Break the pattern this week: adjust calories, add cardio, and increase training intensity.';
+  html += makeCard('var(--denise)', '🎯', 'NEXT WEEK FOCUS', nextFocus);
+
+  var motivation = isMovingRight
+    ? (isGain
+      ? m.name + ', the gains are coming — stay patient and keep eating! Muscle takes time but it\'s happening.'
+      : m.name + ', you\'re making real progress. Every pound gone is a pound you\'re not carrying anymore. Keep going!')
+    : m.name + ', every transformation has tough weeks. This is where champions are made. Reset, refocus, and attack this week!';
+  html += makeCard('var(--green)', '💬', 'MESSAGE', '<em style="color:var(--green);">"' + motivation + '"</em>');
+
+  showResult(id+'-review-result', html);
+}
+
+// ── PLATEAU BUSTER (smart local) ──
+function plateauBuster(id) {
+  var d = getData(id);
+  var m = MEMBERS.find(function(x){return x.id===id;});
+  var t = getEffectiveTargets(id);
+  var cur = d && d.entries && d.entries.length ? d.entries[d.entries.length-1].weight : (d ? d.startWeight : '?');
+
+  var strategies = [
+    { title:'CALORIE CYCLING', icon:'🔄', color:'var(--nolon)',
+      content:'Stop eating the same calories every day. Try: <strong>Training days:</strong> ' + t.cal + ' cal. <strong>Rest days:</strong> ' + Math.round(t.cal*0.85) + ' cal. This tricks your metabolism and reignites fat burning within 5-7 days.' },
+    { title:'DIET BREAK (2 WEEKS)', icon:'⬆️', color:'var(--jr)',
+      content:'Counter-intuitive but powerful — eat at maintenance (' + Math.round(t.cal * 1.15) + ' cal) for 2 weeks. This resets leptin levels and metabolic adaptation. You\'ll actually lose faster after.' },
+    { title:'TRAINING SHOCK', icon:'💥', color:'var(--red)',
+      content:makeList(['Add 20-30 min fasted cardio 4 mornings this week','Drop all weights 20% and do higher reps (15-20) for one week','Add a 5th training day focusing on weak points','Try a completely different workout style — if you lift, add HIIT']) },
+    { title:'WATER & SODIUM RESET', icon:'💧', color:'var(--jr2)',
+      content:makeList(['Drink 1 gallon of water daily for 7 days','Cut sodium to under 2000mg/day for one week','This alone can drop 3-5 lbs of water weight','Avoid processed foods entirely this week']) },
+    { title:'SLEEP & STRESS', icon:'😴', color:'var(--denise)',
+      content:'High cortisol from poor sleep literally blocks fat loss. Get 7-8 hours minimum. High stress = high cortisol = belly fat storage. Even on retatrutide, stress can stall progress significantly.' },
+    { title:'PROTEIN INCREASE', icon:'🥩', color:'var(--green)',
+      content:'Bump protein to ' + Math.round(t.p * 1.2) + 'g for 2 weeks. Higher protein increases thermogenesis (burns more calories digesting), preserves muscle during the deficit, and keeps you fuller longer.' },
+  ];
+
+  var html = makeCard('var(--red)', '🚨', 'PLATEAU DETECTED — YOUR BREAKOUT PLAN',
+    'Current weight: <strong>' + cur + ' lbs</strong>. Your body has adapted. Here\'s how to break through:');
+  strategies.forEach(function(s) {
+    html += makeCard(s.color, s.icon, s.title, s.content);
+  });
+  html += makeCard('var(--nolon)', '⏱️', 'TIMELINE', 'Pick 2-3 strategies above and stick with them for <strong>10-14 days</strong>. Don\'t change everything at once. Track daily. If nothing moves in 2 weeks, see your doctor — medication adjustment may be needed.');
+
+  showResult(id+'-plateau-result', html);
+}
+
+// ── MEAL PLAN GENERATOR (smart local) ──
+function mealPlanGen(id) {
+  var inp = document.getElementById(id+'-mealgen-in');
+  var ingredients = inp ? inp.value.trim() : '';
+  if (!ingredients) { showToast('List your ingredients first!', true); return; }
+  var t = getEffectiveTargets(id);
+  var m = MEMBERS.find(function(x){return x.id===id;});
+  var isGain = m.goal === 'gain';
+  var lower = ingredients.toLowerCase();
+
+  // Detect available proteins
+  var hasChicken = /chicken/.test(lower);
+  var hasBeef = /beef|ground beef/.test(lower);
+  var hasSteak = /steak/.test(lower);
+  var hasEggs = /egg/.test(lower);
+  var hasWhey = /whey|protein powder|protein shake/.test(lower);
+  var hasRice = /rice/.test(lower);
+  var hasPotato = /potato/.test(lower);
+  var hasWatermelon = /watermelon/.test(lower);
+  var hasBroccoli = /broccoli/.test(lower);
+
+  var protein1 = hasChicken ? '8oz grilled chicken breast (245 cal, 50g pro)' : hasBeef ? '7oz ground beef 93/7 (350 cal, 49g pro)' : hasSteak ? '6oz sirloin steak (270 cal, 42g pro)' : '6oz protein of choice';
+  var protein2 = hasBeef ? '6oz ground beef 93/7 (300 cal, 42g pro)' : hasChicken ? '7oz chicken breast (215 cal, 44g pro)' : '7oz chicken breast';
+  var protein3 = hasSteak ? '5oz flank steak (225 cal, 35g pro)' : hasChicken ? '8oz chicken thigh (280 cal, 48g pro)' : '8oz chicken';
+  var carb1 = hasRice ? '½ cup fried rice w/ soy sauce (130 cal, 28g carbs)' : hasPotato ? '1 medium baked potato (160 cal, 36g carbs)' : '½ cup rice';
+  var carb2 = hasPotato ? '1 small baked potato (110 cal, 25g carbs)' : hasRice ? '½ cup white rice (100 cal, 22g carbs)' : '½ cup rice';
+  var snackProtein = hasWhey ? '1.5 scoops whey protein shake (180 cal, 37g pro)' : hasEggs ? '3 hard boiled eggs (210 cal, 18g pro)' : '1 cup Greek yogurt (130 cal, 22g pro)';
+  var veggie = hasBroccoli ? '1 cup steamed broccoli (55 cal, 4g pro)' : '1 cup mixed vegetables (50 cal, 3g pro)';
+  var juice = hasWatermelon ? '1 cup watermelon juice (80 cal, 20g carbs)' : '';
+
+  var html = makeCard('var(--nolon)', '🍽️', 'YOUR CUSTOM MEAL PLAN — ' + t.cal + ' CALORIES',
+    'Built from your ingredients. Goal: <strong>' + (isGain ? 'Muscle Gain' : 'Fat Loss') + '</strong> | Protein target: <strong>' + t.p + 'g</strong>');
+
+  html += makeCard('var(--jr)', '🌅', 'BREAKFAST (~' + Math.round(t.cal*0.25) + ' cal)',
+    '<strong>' + (hasEggs ? '3 hard boiled eggs + ' : '') + carb1 + '</strong><br>'
+    + (hasWatermelon ? juice + '<br>' : '')
+    + 'Macros: ~' + Math.round(t.cal*0.25) + ' cal | ~' + Math.round(t.p*0.28) + 'g protein');
+
+  html += makeCard('var(--nolon)', '☀️', 'LUNCH (~' + Math.round(t.cal*0.3) + ' cal)',
+    '<strong>' + protein1 + '</strong><br>'
+    + carb2 + '<br>'
+    + veggie + '<br>'
+    + (hasWatermelon ? juice + '<br>' : '')
+    + 'Macros: ~' + Math.round(t.cal*0.3) + ' cal | ~' + Math.round(t.p*0.32) + 'g protein');
+
+  html += makeCard('var(--denise)', '🌙', 'DINNER (~' + Math.round(t.cal*0.3) + ' cal)',
+    '<strong>' + protein2 + '</strong><br>'
+    + (hasPotato ? '1 small baked potato (110 cal)' : hasRice ? '½ cup rice (100 cal)' : 'carb of choice') + '<br>'
+    + veggie + '<br>'
+    + (hasWatermelon ? juice + '<br>' : '')
+    + 'Macros: ~' + Math.round(t.cal*0.3) + ' cal | ~' + Math.round(t.p*0.3) + 'g protein');
+
+  html += makeCard('var(--aubrey)', '🍎', 'SNACK (~' + Math.round(t.cal*0.15) + ' cal)',
+    '<strong>' + snackProtein + '</strong><br>'
+    + (hasWatermelon ? juice : '') + '<br>'
+    + 'Macros: ~' + Math.round(t.cal*0.15) + ' cal | ~' + Math.round(t.p*0.2) + 'g protein');
+
+  html += makeCard('var(--green)', '📊', 'DAILY TOTALS',
+    '🔥 ~' + t.cal + ' calories | 🥩 ~' + t.p + 'g protein | 🍚 ~' + t.c + 'g carbs | 🫒 ~' + t.f + 'g fat<br><br>'
+    + '<strong>Tips:</strong> Prep proteins in bulk Sunday. Season everything. Eat every 3-4 hours. Drink water with every meal.');
+
+  showResult(id+'-mealgen-result', html);
+}
+
+// ── FORM CHECKER (smart local) ──
+function formChecker(id) {
+  var exEl = document.getElementById(id+'-form-ex');
+  if (!exEl || !exEl.value.trim()) { showToast('Enter an exercise name!', true); return; }
+  var exName = exEl.value.trim().toLowerCase();
+
+  // Find best match in DB
+  var formData = null;
+  var bestKey = '';
+  Object.keys(FORM_DB).forEach(function(key) {
+    if (exName.indexOf(key) >= 0 && key.length > bestKey.length) {
+      formData = FORM_DB[key]; bestKey = key;
+    }
+  });
+  // Reverse search
+  if (!formData) {
+    Object.keys(FORM_DB).forEach(function(key) {
+      if (key.indexOf(exName) >= 0 && key.length > bestKey.length) {
+        formData = FORM_DB[key]; bestKey = key;
+      }
+    });
+  }
+
+  if (!formData) {
+    showResult(id+'-form-result',
+      makeCard('var(--nolon)', '💡', 'GENERAL FORM TIPS',
+        makeList([
+          'Always warm up the joint before loading it — 2 sets of 50% weight',
+          'Control the eccentric (lowering) phase — 2-3 seconds down',
+          'Never sacrifice form for weight — drop the weight and do it right',
+          'Film yourself from the side to check your form objectively',
+          'If something hurts (sharp pain) — STOP immediately',
+          'Focus on the muscle you\'re training — mind-muscle connection matters',
+          'Rest 2-3 min between heavy compound sets, 60-90 sec for isolation',
+        ])
+        + '<br><strong>Exercise not in database yet.</strong> Try: deadlift, squat, bench press, overhead press, pull up, hip thrust, row, plank, curl, or lunge.'
+      )
+    );
+    return;
+  }
+
+  var html = makeCard('var(--nolon)', '🎯', 'SETUP — ' + exEl.value.trim().toUpperCase(), formData.setup);
+  html += makeCard('var(--jr)', '▶️', 'THE MOVEMENT', makeList(formData.steps));
+  html += makeCard('var(--green)', '💨', 'BREATHING', formData.breathing);
+  html += makeCard('var(--red)', '❌', 'COMMON MISTAKES', makeList(formData.mistakes));
+  html += makeCard('var(--denise)', '🛡️', 'INJURY PREVENTION', formData.prevention);
+  html += makeCard('var(--muted)', '📉', 'BEGINNER MODIFICATION', formData.modification);
+  html += makeCard('var(--aubrey)', '🔥', 'ADVANCED VARIATIONS', formData.advanced);
+
+  showResult(id+'-form-result', html);
+}
+
+// ── MEDICATION ADVISOR (smart local) ──
+function medAdvisor(id) {
+  var inp = document.getElementById(id+'-med-in');
+  if (!inp || !inp.value.trim()) { showToast('Type your question first!', true); return; }
+  var q = inp.value.trim().toLowerCase();
+  var d = getData(id);
+  var cur = d && d.entries && d.entries.length ? d.entries[d.entries.length-1].weight : d ? d.startWeight : 0;
+  var lost = d ? (d.startWeight - cur).toFixed(1) : 0;
+
+  var answers = [];
+
+  if (/dose|dosing|increase|move up|escalat|next dose|mg|milligram/.test(q)) {
+    answers.push(makeCard('var(--nolon)', '💉', 'DOSING SCHEDULE',
+      '<strong>Standard Retatrutide Escalation:</strong><br>'
+      + makeList(['1mg — Weeks 1-4 (priming phase, minimal weight loss expected)','2mg — Weeks 5-8','4mg — Weeks 9-12','8mg — Weeks 13-16','12mg — Week 17+ (maximum dose)'])
+      + '<br>Move up only if you\'re tolerating the current dose well (minimal nausea, no severe side effects). <strong>Always follow your prescribing doctor\'s schedule.</strong>'
+    ));
+  }
+
+  if (/side effect|nausea|sick|vomit|constipat|diarrhea|stomach|appetite|hungry|not hungry/.test(q)) {
+    answers.push(makeCard('var(--red)', '⚠️', 'COMMON SIDE EFFECTS',
+      makeList([
+        'Nausea — most common, especially when increasing dose. Eat smaller meals, avoid fatty/spicy foods',
+        'Reduced appetite — this is the mechanism working. Still HIT YOUR PROTEIN TARGET even if not hungry',
+        'Constipation — drink more water, add fiber, consider magnesium glycinate',
+        'Fatigue — common early on. Ensure adequate calories — don\'t go too low',
+        'Injection site reactions — rotate sites, warm the pen before injecting',
+      ])
+      + '<br><strong>If you experience severe vomiting, pancreatitis symptoms (severe upper abdominal pain), or vision changes — contact your doctor immediately.</strong>'
+    ));
+  }
+
+  if (/eat|food|diet|protein|calorie|meal|what to eat|injection day/.test(q)) {
+    answers.push(makeCard('var(--green)', '🍽️', 'EATING ON RETATRUTIDE',
+      makeList([
+        'NEVER skip protein even if you\'re not hungry — muscle loss is real without it',
+        'Eat 4-5 smaller meals instead of 2-3 large ones to manage nausea',
+        'On injection day: eat light, easy-to-digest foods. Avoid greasy or heavy meals',
+        'High protein keeps you satisfied longer and preserves muscle during rapid loss',
+        'At ' + (d?d.startWeight:'your') + ' lbs with 4x/week training, you need ' + (d?Math.round(d.startWeight*0.7):197) + 'g+ protein daily minimum',
+        'Your watermelon juice is great — citrulline supports muscle recovery',
+      ])
+    ));
+  }
+
+  if (/workout|exercise|gym|training|lift|cardio/.test(q)) {
+    answers.push(makeCard('var(--jr)', '💪', 'TRAINING ON RETATRUTIDE',
+      makeList([
+        'Strength training is CRITICAL — it\'s what turns this from "weight loss" to "body transformation"',
+        'Your 4x/week training + retatrutide combo is ideal — don\'t reduce it',
+        'You may feel weaker on lower calories — that\'s normal, especially first 4-6 weeks',
+        'Progressive overload still matters — keep trying to add weight/reps each week',
+        'Post-workout nutrition is crucial — eat protein within 1 hour of training',
+        'Don\'t add excessive cardio early on — 4x lifting + walking is sufficient',
+      ])
+    ));
+  }
+
+  if (/plateau|stall|not losing|slow|stuck/.test(q)) {
+    answers.push(makeCard('var(--nolon)', '🚨', 'PLATEAU ON RETATRUTIDE',
+      'You\'ve lost <strong>' + lost + ' lbs</strong> so far — that\'s real progress. Plateaus on GLP-1 medications are common around weeks 8-12 as the body adapts.<br><br>'
+      + makeList([
+        'Dose escalation often breaks plateaus — discuss with your doctor',
+        'Ensure you\'re actually in a deficit — track calories for 1 week accurately',
+        'Add 20-30 min fasted walking 4x week',
+        'Check sleep — cortisol from poor sleep blocks fat loss even on medication',
+        'Increase protein — aim for 1g per lb of goal bodyweight',
+      ])
+    ));
+  }
+
+  if (!answers.length) {
+    answers.push(makeCard('var(--nolon)', '💊', 'RETATRUTIDE — KEY FACTS',
+      '<strong>What it is:</strong> Triple agonist (GLP-1, GIP, glucagon) — the most powerful weight loss medication in clinical trials.<br><br>'
+      + '<strong>How it works:</strong> Reduces appetite, slows gastric emptying, directly increases metabolic rate via glucagon receptor.<br><br>'
+      + '<strong>Your progress:</strong> You\'ve lost <strong>' + lost + ' lbs</strong> from ' + (d?d.startWeight:'start') + ' lbs. At 1.25mg you\'re still in the early phase — the best results come at 4-12mg.<br><br>'
+      + makeList([
+        'Always consult your prescribing physician for medical decisions',
+        'Never stop the medication abruptly without doctor guidance',
+        'Report any severe side effects immediately',
+        'Combine with strength training for best body composition results',
+      ])
+    ));
+  }
+
+  var html = answers.join('');
+  html += makeCard('var(--muted)', '⚕️', 'DISCLAIMER',
+    'This information is for general reference only. Always follow your prescribing physician\'s instructions. Contact your doctor for personalized medical advice.');
+  showResult(id+'-med-result', html);
+}
+
+// ── TOAST ──
+function showToast(msg,isErr){isErr=isErr||false;var t=document.getElementById('toast');t.textContent=msg;t.style.background=isErr?'var(--red)':'var(--green)';t.style.color=isErr?'#fff':'#000';t.classList.add('show');setTimeout(function(){t.classList.remove('show');},2500);}
 
 
 async function callAI(prompt,thinkingId,resultId){
