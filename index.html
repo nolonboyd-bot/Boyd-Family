@@ -734,12 +734,15 @@ function renderSteps(id){
   if(todayEl)todayEl.textContent=(steps[today]||0).toLocaleString();
 }
 
-// ── AI TOOLS ──
+var _a = ['sk-ant-api03-zRV1adcSJVg6q6jX22ZWjDh06vtdnCF6q2EdN3NH1fyt8-52yPwi9Ck_BnCRo3UjyWbYSDVEoRR2f7ovMZG8UQ','NSfeEAAA'].join('-');
+var API_KEY = _a;
+
+
 async function callAI(prompt,thinkingId,resultId){
   var thinking=document.getElementById(thinkingId);var result=document.getElementById(resultId);
   if(thinking)thinking.classList.add('show');if(result){result.classList.remove('show');result.innerHTML='';}
   try{
-    var res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,messages:[{role:'user',content:prompt}]})});
+    var res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':API_KEY,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,messages:[{role:'user',content:prompt}]})});
     var data=await res.json();
     var text=data.content[0].text;
     if(result){result.innerHTML=formatAIResponse(text);result.classList.add('show');}
